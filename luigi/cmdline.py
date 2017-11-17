@@ -23,6 +23,8 @@ def luigid(argv=sys.argv[1:]):
     parser.add_argument(u'--address', help=u'Listening interface')
     parser.add_argument(u'--unix-socket', help=u'Unix socket path')
     parser.add_argument(u'--port', default=8082, help=u'Listening port')
+    parser.add_argument(u'--redis-url', help=u'Redis URL')
+    parser.add_argument(u'--redis-prefix', help=u'Redis prefix')
 
     opts = parser.parse_args(argv)
 
@@ -53,4 +55,5 @@ def luigid(argv=sys.argv[1:]):
             else:
                 print("Defaulting to basic logging; consider specifying logging_conf_file in luigi.cfg.")
                 logging.basicConfig(level=logging.INFO, format=luigi.process.get_log_format())
-        luigi.server.run(api_port=opts.port, address=opts.address, unix_socket=opts.unix_socket)
+        luigi.server.run(api_port=opts.port, address=opts.address, unix_socket=opts.unix_socket,
+                         redis_url=opts.redis_url, redis_prefix=opts.redis_prefix)

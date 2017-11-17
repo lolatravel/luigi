@@ -43,13 +43,16 @@ import signal
 import sys
 import datetime
 import time
+from urlparse import urlparse
 
 import pkg_resources
 import tornado.httpserver
 import tornado.ioloop
 import tornado.netutil
 import tornado.web
+from redis import Redis
 
+from luigi.contrib.redis_scheduler import RedisScheduler
 from luigi.scheduler import Scheduler, RPC_METHODS
 
 logger = logging.getLogger("luigi.server")
@@ -218,12 +221,21 @@ def _init_api(scheduler, api_port=None, address=None, unix_socket=None):
     return [s.getsockname() for s in api_sockets]
 
 
-def run(api_port=8082, address=None, unix_socket=None, scheduler=None):
+def run(api_port=8082, address=None, unix_socket=None, scheduler=None, redis_url=None, redis_prefix=None):
     """
     Runs one instance of the API server.
     """
     if scheduler is None:
-        scheduler = Scheduler()
+        if redis_url:
+            if redis_prefix is None:
+                redis_prefix = 'luigi'
+
+            logger.info('Using redis based scheduler')
+            redis_info = urlparse(redis_url)
+            redis = Redis(host=redis_info.hostname, port=redis_info.port, password=redis_info.password)
+            scheduler = RedisScheduler(redis, redis_prefix)
+        else:
+            scheduler = Scheduler()
 
     # load scheduler state
     scheduler.load()
